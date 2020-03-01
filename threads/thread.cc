@@ -94,7 +94,7 @@ Thread::Fork(VoidFunctionPtr func, int arg)
 
     IntStatus oldLevel = interrupt->SetLevel(IntOff);
     scheduler->ReadyToRun(this);	// ReadyToRun assumes that interrupts 
-					// are disabled!
+					// are disabled!gu
     (void) interrupt->SetLevel(oldLevel);
 }    
 
@@ -304,6 +304,7 @@ Thread::SaveUserState()
 
 //----------------------------------------------------------------------
 // Thread::RestoreUserState
+
 //	Restore the CPU state of a user program on a context switch.
 //
 //	Note that a user program thread has *two* sets of CPU registers -- 
