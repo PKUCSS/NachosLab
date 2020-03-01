@@ -12,6 +12,7 @@
 // These are all initialized and de-allocated by this file.
 #define MaxThreadCount 128  // Maximum number of threads 
 bool ThreadIDOccupied[MaxThreadCount]; // Mark threads as occupied or not 
+Thread* thread_poiners[MaxThreadCount]; // pointers to threads
 
 Thread *currentThread;			// the thread we are running now
 Thread *threadToBeDestroyed;  		// the thread that just finished
@@ -142,6 +143,7 @@ Initialize(int argc, char **argv)
 
     for (int i = 0 ; i < MaxThreadCount ; i++){
         ThreadIDOccupied[i] = false;   // Initialize all thread ids as free 
+        thread_poiners[i] = NULL; // Initialize all thread pointers as NULL
     }
 
     // We didn't explicitly allocate the current thread we are running in.
@@ -201,3 +203,13 @@ Cleanup()
     Exit(0);
 }
 
+void GetThreadStatus(){
+    printf("Name    UID    TID    Status  \n");
+    char* StatusName[] = {"JUST_CREATED", "RUNNING", "READY", "BLOCKED"};
+    for (int i = 0 ; i < MaxThreadCount ; i++){
+        if (thread_poiners[i] != NULL){
+            printf("%s  %d   %d  %s\n",thread_poiners[i]->getName(),thread_poiners[i]->GetUserID(),
+            thread_poiners[i]->GetThreadID(),StatusName[thread_poiners[i]->GetStatus()]);
+        }
+    }
+} 

@@ -39,6 +39,7 @@ Thread::Thread(char* threadName)
         if (!ThreadIDOccupied[i]) {
             ThreadIDOccupied[i] = true;
             tid = i;  // allocate thread id
+            thread_poiners[i] = this;
             allocated = true; 
             break;
         } 
@@ -78,6 +79,7 @@ Thread::~Thread()
     if (stack != NULL)
 	DeallocBoundedArray((char *) stack, StackSize * sizeof(int));
     ThreadIDOccupied[this->tid] = false;
+    thread_poiners[this->tid] = NULL;
 }
 
 //----------------------------------------------------------------------
@@ -252,6 +254,8 @@ Thread::Sleep ()
 static void ThreadFinish()    { currentThread->Finish(); }
 static void InterruptEnable() { interrupt->Enable(); }
 void ThreadPrint(int arg){ Thread *t = (Thread *)arg; t->Print(); }
+
+
 
 //----------------------------------------------------------------------
 // Thread::StackAllocate

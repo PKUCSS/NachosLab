@@ -12,6 +12,7 @@
 #include "copyright.h"
 #include "system.h"
 
+
 // testnum is set in main.cc
 int testnum = 1;
 
@@ -44,6 +45,7 @@ void SimpleThread2(int which)
             currentThread->GetUserID(),currentThread->GetThreadID(),num);
         currentThread->Yield();
     }
+    GetThreadStatus();
 }
 
 //----------------------------------------------------------------------
@@ -72,6 +74,7 @@ void ThreadTest2(){
         // Define a new thread's function and its parameter
         t->Fork(SimpleThread2, t->GetThreadID());
     }
+    
 
 }
 
