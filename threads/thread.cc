@@ -34,6 +34,21 @@
 
 Thread::Thread(char* threadName)
 {
+    bool allocated = false;
+    for(int i = 0; i < MaxThreadCount; i++){
+        if (!ThreadIDOccupied[i]) {
+            ThreadIDOccupied[i] = true;
+            tid = i;  // allocate thread id
+            allocated = true; 
+            break;
+        } 
+    }
+    if (!allocated){
+         printf("\n Oops,MaxThreadCount exceeded!");
+    }
+    ASSERT(allocated);
+
+    uid = 0;
     name = threadName;
     stackTop = NULL;
     stack = NULL;
@@ -62,6 +77,7 @@ Thread::~Thread()
     ASSERT(this != currentThread);
     if (stack != NULL)
 	DeallocBoundedArray((char *) stack, StackSize * sizeof(int));
+    ThreadIDOccupied[this->tid] = false;
 }
 
 //----------------------------------------------------------------------

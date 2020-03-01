@@ -10,6 +10,8 @@
 
 // This defines *all* of the global data structures used by Nachos.
 // These are all initialized and de-allocated by this file.
+#define MaxThreadCount 128  // Maximum number of threads 
+bool ThreadIDOccupied[MaxThreadCount]; // Mark threads as occupied or not 
 
 Thread *currentThread;			// the thread we are running now
 Thread *threadToBeDestroyed;  		// the thread that just finished
@@ -137,6 +139,10 @@ Initialize(int argc, char **argv)
 	timer = new Timer(TimerInterruptHandler, 0, randomYield);
 
     threadToBeDestroyed = NULL;
+
+    for (int i = 0 ; i < MaxThreadCount ; i++){
+        ThreadIDOccupied[i] = false;   // Initialize all thread ids as free 
+    }
 
     // We didn't explicitly allocate the current thread we are running in.
     // But if it ever tries to give up the CPU, we better have a Thread

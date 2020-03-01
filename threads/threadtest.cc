@@ -35,6 +35,17 @@ SimpleThread(int which)
     }
 }
 
+void SimpleThread2(int which)
+{
+    int num;
+
+    for (num = 0; num < 5; num++) {
+        printf("*** thread %d ,uid = %d,tid = %d ,looped %d\n",which,
+            currentThread->GetUserID(),currentThread->GetThreadID(),num);
+        currentThread->Yield();
+    }
+}
+
 //----------------------------------------------------------------------
 // ThreadTest1
 // 	Set up a ping-pong between two threads, by forking a thread 
@@ -52,6 +63,27 @@ ThreadTest1()
     SimpleThread(0);
 }
 
+void ThreadTest2(){
+    DEBUG('t', "Entering ThreadTest2,testing for tid and uid in Lab1");
+    for (int i = 0; i < 5; i++) {
+        // Generate a Thread object
+        Thread *t = new Thread("forked thread");
+        t->SetUserID(i*11); // set uid
+        // Define a new thread's function and its parameter
+        t->Fork(SimpleThread2, t->GetThreadID());
+    }
+
+}
+
+void ThreadTest3(){
+    DEBUG('t',"Entering ThreadTest3,testing for MaxThreadCount Limit");
+    printf("Successufully allocated thread ids: ");
+    for (int i = 0; i < 130 ; ++i){
+        Thread *t = new Thread("forked thread");
+        printf(" %d",t->GetThreadID());
+    }
+}
+
 //----------------------------------------------------------------------
 // ThreadTest
 // 	Invoke a test routine.
@@ -64,6 +96,12 @@ ThreadTest()
     case 1:
 	ThreadTest1();
 	break;
+    case 2:
+    ThreadTest2();
+    break;
+    case 3:
+    ThreadTest3();
+    break;
     default:
 	printf("No test specified.\n");
 	break;
