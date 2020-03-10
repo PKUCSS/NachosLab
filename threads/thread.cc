@@ -32,7 +32,7 @@
 //	"threadName" is an arbitrary string, useful for debugging.
 //----------------------------------------------------------------------
 
-Thread::Thread(char* threadName)
+Thread::Thread(char* threadName,int Priority)
 {
     bool allocated = false;
     for(int i = 0; i < MaxThreadCount; i++){
@@ -54,6 +54,8 @@ Thread::Thread(char* threadName)
     stackTop = NULL;
     stack = NULL;
     status = JUST_CREATED;
+    priority = Priority;
+    ASSERT(priority >= 0 && priority < 256);
 #ifdef USER_PROGRAM
     space = NULL;
 #endif
@@ -281,7 +283,7 @@ Thread::StackAllocate (VoidFunctionPtr func, int arg)
 #else
     // i386 & MIPS & SPARC stack works from high addresses to low addresses
 #ifdef HOST_SPARC
-    // SPARC stack must contains at least 1 activation record to start with.
+    // SPARC stswck must contains at least 1 activation record to start with.
     stackTop = stack + StackSize - 96;
 #else  // HOST_MIPS  || HOST_i386
     stackTop = stack + StackSize - 4;	// -4 to be on the safe side!

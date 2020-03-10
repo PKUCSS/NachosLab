@@ -56,7 +56,15 @@ Scheduler::ReadyToRun (Thread *thread)
     DEBUG('t', "Putting thread %s on ready list.\n", thread->getName());
 
     thread->setStatus(READY);
-    readyList->Append((void *)thread);
+    // readyList->Append((void *)thread); // Initial code 
+    readyList->SortedInsert((void *)thread,thread->GetPriority()); // Lab2  priority queue scheduling 
+    if(thread != currentThread && thread->GetPriority() < currentThread->GetPriority()) // LAB2 preemption
+    {
+        printf("preemption here\n");
+        printf("Thread %d yielded,priority = %d\n",currentThread->GetThreadID(),currentThread->GetPriority());
+        printf("Thread %d preempted,priority = %d\n",thread->GetThreadID(),thread->GetPriority());
+        currentThread->Yield();
+    }
 }
 
 //----------------------------------------------------------------------

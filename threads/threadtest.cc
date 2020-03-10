@@ -36,16 +36,25 @@ SimpleThread(int which)
     }
 }
 
+void PrintFlag(int arg){
+    printf("Flag Thread %d runs here!\n",arg);
+   // GetThreadStatus();
+}
+
 void SimpleThread2(int which)
 {
     int num;
 
     for (num = 0; num < 5; num++) {
-        printf("*** thread %d ,uid = %d,tid = %d ,looped %d\n",which,
-            currentThread->GetUserID(),currentThread->GetThreadID(),num);
+        printf("*** thread %d ,uid = %d,tid = %d,priority = %d,looped %d\n",which,
+            currentThread->GetUserID(),currentThread->GetThreadID(),currentThread->GetPriority(),num);
         currentThread->Yield();
     }
-    GetThreadStatus();
+    Thread* flag = new Thread("Flag",1);
+    flag->Fork(PrintFlag,flag->GetThreadID());
+    printf("*** thread %d ,uid = %d,tid = %d,priority = %d,ends here\n",which,currentThread->GetUserID(),
+    currentThread->GetThreadID(),currentThread->GetPriority());
+  //  GetThreadStatus();
 }
 
 //----------------------------------------------------------------------
@@ -74,7 +83,7 @@ void ThreadTest2(){
         // Define a new thread's function and its parameter
         t->Fork(SimpleThread2, t->GetThreadID());
     }
-    
+    GetThreadStatus();
 
 }
 
@@ -85,6 +94,26 @@ void ThreadTest3(){
         Thread *t = new Thread("forked thread");
         printf(" %d",t->GetThreadID());
     }
+}
+
+
+void ThreadTest4(){
+    DEBUG('r',"Entering ThreadTest4,testing for priority scheduling,LAB2");
+    printf("Entering ThreadTest4,testing for priority scheduling,LAB2\n");
+    currentThread->SetPriority(0);
+    Thread *t1 = new Thread("highest", 12);
+    Thread *t2 = new Thread("middle", 24);
+    Thread *t3 = new Thread("lowest", 36);
+
+    
+    
+
+    t3->Fork(SimpleThread2, t3->GetThreadID());
+    t2->Fork(SimpleThread2, t2->GetThreadID());
+    t1->Fork(SimpleThread2, t1->GetThreadID());
+
+
+    printf("main thread ends here\n");
 }
 
 //----------------------------------------------------------------------
@@ -105,6 +134,8 @@ ThreadTest()
     case 3:
     ThreadTest3();
     break;
+    case 4:
+    ThreadTest4();
     default:
 	printf("No test specified.\n");
 	break;

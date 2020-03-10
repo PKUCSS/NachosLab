@@ -81,8 +81,9 @@ class Thread {
     int machineState[MachineStateSize];  // all registers except for stackTop
     int uid ; // User ID 
     int tid ; // Thread ID  
+    int priority ; // Scheduling Priority
   public: 
-    Thread(char* debugName);		// initialize a Thread 
+    Thread(char* debugName,int Priority=255);		// initialize a Thread 
     ~Thread(); 				// deallocate a Thread
 					// NOTE -- thread being deleted
 					// must not be running when delete 
@@ -105,8 +106,10 @@ class Thread {
     int GetUserID(){return uid;}
     int GetThreadID(){return tid;}
     void SetUserID(int  UserID) {uid = UserID;} 
-    
 
+    int GetPriority() { return priority;}
+    void SetPriority(int Priority) { priority = Priority;}
+    
 
   private:
     // some of the private data for this class is listed above

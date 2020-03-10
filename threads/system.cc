@@ -203,13 +203,13 @@ Cleanup()
     Exit(0);
 }
 
-void GetThreadStatus(){
-    printf("Name    UID    TID    Status  \n");
+void GetThreadStatus(){  // TS Command for LAB1
+    printf("Name    UID    TID    Status  Priority\n"); // Add Priority in LAB2 
     char* StatusName[] = {"JUST_CREATED", "RUNNING", "READY", "BLOCKED"};
     for (int i = 0 ; i < MaxThreadCount ; i++){
         if (thread_poiners[i] != NULL){
-            printf("%s  %d   %d  %s\n",thread_poiners[i]->getName(),thread_poiners[i]->GetUserID(),
-            thread_poiners[i]->GetThreadID(),StatusName[thread_poiners[i]->GetStatus()]);
+            printf("%s  %d   %d  %s  %d\n",thread_poiners[i]->getName(),thread_poiners[i]->GetUserID(),
+            thread_poiners[i]->GetThreadID(),StatusName[thread_poiners[i]->GetStatus()],thread_poiners[i]->GetPriority());
         }
     }
 } 
