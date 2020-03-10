@@ -67,6 +67,23 @@ TimerInterruptHandler(int dummy)
 	interrupt->YieldOnReturn();
 }
 
+
+static void
+RoundingTimerInterruptHandler(int dummy)
+{
+    int timeDuration = stats->totalTicks - scheduler->lastSwitchTime;
+    printf("\nTimer interrupt with duration: %d", timeDuration);
+    if (timeDuration >= TimerTicks) {
+        if (interrupt->getStatus() != IdleMode) { // IdleMode == readyList empty
+            printf("time slice exhausted,switch now\n");
+            interrupt->YieldOnReturn();
+            scheduler->lastSwitchTime = stats->totalTicks; // update lastSwitchTick
+        } else {
+            printf("Oops!No ready threads in the ready list\n");
+        }
+    } 
+}
+
 //----------------------------------------------------------------------
 // Initialize
 // 	Initialize Nachos global data structures.  Interpret command
@@ -83,6 +100,7 @@ Initialize(int argc, char **argv)
     int argCount;
     char* debugArgs = "";
     bool randomYield = FALSE;
+    bool roundingSlice = FALSE;
 
 #ifdef USER_PROGRAM
     bool debugUserProg = FALSE;	// single step user program
@@ -111,6 +129,11 @@ Initialize(int argc, char **argv)
 	    randomYield = TRUE;
 	    argCount = 2;
 	}
+    if(!strcmp(*argv,"-rd")){
+        ASSERT(argc > 1);
+        roundingSlice = TRUE;
+        argCount = 2;
+    }
 #ifdef USER_PROGRAM
 	if (!strcmp(*argv, "-s"))
 	    debugUserProg = TRUE;
@@ -138,7 +161,8 @@ Initialize(int argc, char **argv)
     scheduler = new Scheduler();		// initialize the ready queue
     if (randomYield)				// start the timer (if needed)
 	timer = new Timer(TimerInterruptHandler, 0, randomYield);
-
+    if (roundingSlice) 
+    timer = new Timer(RoundingTimerInterruptHandler,0,randomYield);  // LAB2 time slice rounding algorithm 
     threadToBeDestroyed = NULL;
 
     for (int i = 0 ; i < MaxThreadCount ; i++){

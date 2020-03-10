@@ -29,7 +29,8 @@
 
 Scheduler::Scheduler()
 { 
-    readyList = new List; 
+    readyList = new List;
+    lastSwitchTime = 0; 
 } 
 
 //----------------------------------------------------------------------
@@ -77,8 +78,9 @@ Scheduler::ReadyToRun (Thread *thread)
 
 Thread *
 Scheduler::FindNextToRun ()
-{
-    return (Thread *)readyList->Remove();
+{   
+
+    return (Thread *)readyList->Remove(); // initial code,return the first element in the ready list
 }
 
 //----------------------------------------------------------------------

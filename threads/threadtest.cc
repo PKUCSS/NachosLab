@@ -57,6 +57,19 @@ void SimpleThread2(int which)
   //  GetThreadStatus();
 }
 
+void SimpleThread3(int which)
+{
+    int num;
+
+    for (num = 0; num < 4; num++) {
+        printf("*** thread %d ,uid = %d,tid = %d,priority = %d,looped %d,used ticks: %d,system ticks: %d\n",which,
+            currentThread->GetUserID(),currentThread->GetThreadID(),currentThread->GetPriority(),num,(num+1)*50,stats->totalTicks);
+        for(int i = 0 ; i < 5 ; ++i ) interrupt->OneTick(); // advanced for 50 ticks
+    }
+    currentThread->Finish();
+  //  GetThreadStatus();
+}
+
 //----------------------------------------------------------------------
 // ThreadTest1
 // 	Set up a ping-pong between two threads, by forking a thread 
@@ -115,6 +128,27 @@ void ThreadTest4(){
 
     printf("main thread ends here\n");
 }
+ 
+void ThreadTest5(){ // Lab2 Challenge:Time Slice Rounding
+    DEBUG('r',"Entering ThreadTest5,testing Lab2 Challenge:Time Slice Rounding");
+    printf("Entering ThreadTest5,testing Lab2 Challenge:Time Slice Rounding\n");
+    currentThread->SetPriority(0);
+    Thread *t1 = new Thread("t1", 12);
+    Thread *t2 = new Thread("t2", 12);
+    Thread *t3 = new Thread("t3", 24);
+    Thread *t4 = new Thread("t4", 24);
+
+    
+    
+    t4->Fork(SimpleThread3,t4->GetThreadID());
+    t3->Fork(SimpleThread3,t3->GetThreadID());
+    t2->Fork(SimpleThread3,t2->GetThreadID());
+    t1->Fork(SimpleThread3,t1->GetThreadID());
+
+
+    printf("main thread ends here\n");
+}
+
 
 //----------------------------------------------------------------------
 // ThreadTest
@@ -136,6 +170,9 @@ ThreadTest()
     break;
     case 4:
     ThreadTest4();
+    case 5:
+    ThreadTest5();
+    break;
     default:
 	printf("No test specified.\n");
 	break;
