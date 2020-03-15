@@ -80,7 +80,7 @@ class Lock {
 
   private:
     char* name;				// for debugging
-    Semaphore sema;   // for synchronization
+    Semaphore* sema;   // for synchronization
     Thread* holdingThread ; // Currently holding thread 
     // plus some other stuff you'll need to define
 };

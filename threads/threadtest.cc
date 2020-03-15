@@ -11,10 +11,178 @@
 
 #include "copyright.h"
 #include "system.h"
-
-
+#include "synch.h"
+#define MAX_PRODUCT 10
 // testnum is set in main.cc
 int testnum = 1;
+
+
+class Product{
+    public:
+        int id;
+        Product(){id = 0; } ;
+};
+
+List *ProductList ;       // The product pool  
+int product_num = 0;
+Lock* lock;               // The lock for synchronization
+Condition* consumeCondition; // The condition for consuming
+Condition* produceCondition; // The condition for producing 
+
+Lock* conditionLock;         // The lock for barrier test 
+Condition* barrierCondition; // The condition for barrier 
+const int barrierSize = 4 ;
+int barrierCnt = 0;
+
+int content = 0; // Content variable for Reader-Writer Problem
+int readerCount = 0 ; // The number of readers in the citical zone 
+Lock* rcLock ; // The lock for readerCount
+Lock* writeLock ; // The lock for content 
+
+
+void read(int which){
+    for (int i = 0 ; i < 5 ; ++i ) {
+        rcLock->Acquire();
+        readerCount++;
+        if (readerCount == 1){
+            writeLock->Acquire();
+        }
+        rcLock->Release();
+        printf("Thread %s read file content: %d\n",currentThread->getName(),content);
+        rcLock->Acquire();
+        readerCount--;
+        if (readerCount == 0){ 
+            writeLock->Release();
+        }
+        rcLock->Release();
+        currentThread->Yield();
+    }
+}
+
+void write(int which){
+    for (int i = 0 ; i < 5 ; ++i){
+        writeLock->Acquire();
+        content++;
+        printf("Thread %s write file content as %d\n",currentThread->getName(),content);
+        writeLock->Release();
+        currentThread->Yield();
+    }
+}
+
+
+void barrierRun(int which){ 
+    
+    conditionLock->Acquire();
+    barrierCnt++;
+    if(barrierCnt == barrierSize){
+
+        printf("thread %s reached savepoint,barrierCnt %d/%d\n",currentThread->getName(),
+                barrierCnt,barrierSize);
+        barrierCondition->Broadcast(conditionLock);
+        conditionLock->Release();
+    }
+    else{
+        printf("thread %s reached savepoint,barrierCnt %d/%d\n",currentThread->getName(),
+                barrierCnt,barrierSize);
+        barrierCondition->Wait(conditionLock);
+        conditionLock->Release();
+    }
+    printf("After gathering at the savepoint with friends,Thread %s continues\n",currentThread->getName());
+    interrupt->OneTick();
+}
+
+void produce_withLock(int which){
+    int i ;
+    for( i = 0 ; i < 20 ; ++i ){
+        lock->Acquire();
+        if (product_num == MAX_PRODUCT){
+            printf("Oops!MAX_PRODUCT reached!We will produce later\n");
+            lock->Release();
+            interrupt->OneTick();
+            --i;
+        }
+        else{
+            Product* pro = new Product();
+            ProductList->Append((void*)pro);
+            printf("Thread %s produced a product,there are %d products now\n",currentThread->getName(),++product_num);
+            lock->Release();
+            interrupt->OneTick(); // 10 time units to produce a product
+
+        }
+ 
+    }
+    currentThread->Finish();
+}
+
+void consume_withLock(int which){
+    int i;
+    for ( i = 0; i < 10 ; i++){
+        
+        lock->Acquire();
+        if(ProductList->IsEmpty()){
+            printf("Thread %s Oop! no products now\n",currentThread->getName());
+            lock->Release();
+            interrupt->OneTick(); 
+            --i;
+            // currentThread->Sleep();
+        }else{
+            Product * pro = (Product *)ProductList->Remove();
+            printf("Thread %s, consumed a product,there are %d products now\n",currentThread->getName(),--product_num);
+            delete pro;
+           
+            lock->Release();
+            interrupt->OneTick(); 
+        }
+    }
+} 
+
+void produce_withCondition(int which){
+    int i ;
+    for( i = 0 ; i < 20 ; ++i ){
+        lock->Acquire();
+        while (product_num >= MAX_PRODUCT){
+            printf("Oops!MAX_PRODUCT reached!We will produce later\n");
+            // lock->Release();
+            produceCondition->Wait(lock);
+            interrupt->OneTick();
+        }
+        
+        Product* pro = new Product();
+        ProductList->Append((void*)pro);
+        printf("Thread %s produced a product,there are %d products now\n",currentThread->getName(),++product_num);
+        consumeCondition->Signal(lock);
+        lock->Release();
+        interrupt->OneTick(); // 10 time units to produce a product
+ 
+    }
+    currentThread->Finish();
+}
+
+void consume_withCondition(int which){
+    int i;
+    for ( i = 0; i < 10 ; i++){
+        
+        lock->Acquire();
+        while(ProductList->IsEmpty()){
+            printf("Thread %s Oop! no products now\n",currentThread->getName());
+            //lock->Release();
+            consumeCondition->Wait(lock);
+            interrupt->OneTick(); 
+            
+            // currentThread->Sleep();
+        }
+        
+        Product * pro = (Product *)ProductList->Remove();
+        printf("Thread %s, consumed a product,there are %d products now\n",currentThread->getName(),--product_num);
+        delete pro;
+        produceCondition->Signal(lock);
+        lock->Release();
+        interrupt->OneTick(); 
+    }
+} 
+
+
+
 
 //----------------------------------------------------------------------
 // SimpleThread
@@ -149,6 +317,78 @@ void ThreadTest5(){ // Lab2 Challenge:Time Slice Rounding
     printf("main thread ends here\n");
 }
 
+void ThreadTest6(){
+    DEBUG('r',"Entering ThreadTest6,testing Lab3.4 Consumer-Prodcuter by lock\n");
+    printf("Entering ThreadTest6,testing Lab3.4 Consumer-Prodcuter by lock\n");
+    lock = new Lock("mutex");
+    ProductList = new List();
+    currentThread->SetPriority(0);
+    Thread *t1 = new Thread("producer", 1);
+    Thread *t2 = new Thread("consumer1", 2);
+    Thread *t3 = new Thread("consumer2", 2);
+
+   
+    t2->Fork(consume_withLock,t2->GetThreadID());
+    t1->Fork(produce_withLock,t1->GetThreadID());
+    t3->Fork(consume_withLock,t3->GetThreadID());
+
+
+    printf("main thread ends here\n");
+}
+void ThreadTest7(){
+    DEBUG('r',"Entering ThreadTest7,testing Lab3.4 Consumer-Prodcuter by conditional variables\n");
+    printf("Entering ThreadTest7,testing Lab3.4 Consumer-Prodcuter by conditional variables\n");
+    lock = new Lock("mutex");
+    consumeCondition = new Condition("consume Condition");
+    produceCondition = new Condition("produce Condition");
+    ProductList = new List();
+    currentThread->SetPriority(0);
+    Thread *t1 = new Thread("producer", 1);
+    Thread *t2 = new Thread("consumer1", 2);
+    Thread *t3 = new Thread("consumer2", 2);
+
+    t1->Fork(produce_withLock,t1->GetThreadID());
+    t2->Fork(consume_withLock,t2->GetThreadID());
+    t3->Fork(consume_withLock,t3->GetThreadID());
+
+
+    printf("main thread ends here\n");
+}
+
+void ThreadTest8(){ 
+    DEBUG('r',"Entering ThreadTest8,testing Lab3 Challenge1:Barrier \n");
+    printf("Entering ThreadTest8,testing Lab3 Challenge1:Barrier \n");
+    conditionLock = new Lock("mutex");
+    barrierCondition = new Condition("Barrier Condition");
+    currentThread->SetPriority(0);
+    Thread* t1 = new Thread("Alice",1);
+    Thread* t2 = new Thread("Bob",1);
+    Thread* t3 = new Thread("Carol",1);
+    Thread* t4 = new Thread("David",1);
+    t1->Fork(barrierRun,t1->GetThreadID());
+    t2->Fork(barrierRun,t2->GetThreadID());
+    t3->Fork(barrierRun,t3->GetThreadID());
+    t4->Fork(barrierRun,t4->GetThreadID());
+    printf("main thread ends here\n");
+}
+
+void ThreadTest9(){ 
+    DEBUG('r',"Entering ThreadTest9,testing Lab3 Challenge2:Read/Wrote Lock \n");
+    printf("Entering ThreadTest9,testing Lab3 Challenge2:Read/Wrote Lock \n");
+    rcLock = new Lock("the lock for readerCount");
+    writeLock = new Lock("the lock for content");
+    currentThread->SetPriority(0);
+    Thread* t1 = new Thread("Reader Alice",1);
+    Thread* t2 = new Thread("Reader Bob",1);
+    Thread* t3 = new Thread("Wrtier Carol",1);
+    Thread* t4 = new Thread("Writer David",1);
+    t3->Fork(write,t3->GetThreadID());
+    t2->Fork(read,t2->GetThreadID());
+    t1->Fork(read,t1->GetThreadID());
+    t4->Fork(write,t4->GetThreadID());
+    printf("main thread ends here\n");
+}
+
 
 //----------------------------------------------------------------------
 // ThreadTest
@@ -172,6 +412,16 @@ ThreadTest()
     ThreadTest4();
     case 5:
     ThreadTest5();
+    break;
+    case 6:
+    ThreadTest6();
+    break;
+    case 7:
+    ThreadTest7();
+    case 8:
+    ThreadTest8();
+    case 9:
+    ThreadTest9();
     break;
     default:
 	printf("No test specified.\n");

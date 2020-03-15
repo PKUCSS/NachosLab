@@ -107,16 +107,16 @@ Semaphore::V()
 // the test case in the network assignment won't work!
 Lock::Lock(char* debugName) {
     name = debugName;
-    sema = Semaphore(debugName,1);
+    sema = new Semaphore(debugName,1);
 }
 Lock::~Lock() {}
 void Lock::Acquire() {
-    sema.P();
+    sema->P();
     holdingThread = currentThread;
 }
 void Lock::Release() {
     holdingThread = NULL;
-    sema.V();
+    sema->V();
 }
 bool Lock::isHeldByCurrentThread(){ 
     return currentThread == holdingThread;

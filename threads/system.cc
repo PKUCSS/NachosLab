@@ -72,14 +72,14 @@ static void
 RoundingTimerInterruptHandler(int dummy)
 {
     int timeDuration = stats->totalTicks - scheduler->lastSwitchTime;
-    printf("\nTimer interrupt with duration: %d", timeDuration);
+    //printf("\nTimer interrupt with duration: %d", timeDuration);
     if (timeDuration >= TimerTicks) {
         if (interrupt->getStatus() != IdleMode) { // IdleMode == readyList empty
-            printf("time slice exhausted,switch now\n");
+           // printf("time slice exhausted,switch now\n");
             interrupt->YieldOnReturn();
             scheduler->lastSwitchTime = stats->totalTicks; // update lastSwitchTick
         } else {
-            printf("Oops!No ready threads in the ready list\n");
+           // printf("Oops!No ready threads in the ready list\n");
         }
     } 
 }
