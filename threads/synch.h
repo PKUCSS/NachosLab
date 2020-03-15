@@ -38,6 +38,7 @@
 
 class Semaphore {
   public:
+    Semaphore();
     Semaphore(char* debugName, int initialValue);	// set initial value
     ~Semaphore();   					// de-allocate semaphore
     char* getName() { return name;}			// debugging assist
@@ -79,6 +80,8 @@ class Lock {
 
   private:
     char* name;				// for debugging
+    Semaphore sema;   // for synchronization
+    Thread* holdingThread ; // Currently holding thread 
     // plus some other stuff you'll need to define
 };
 
@@ -131,6 +134,7 @@ class Condition {
 
   private:
     char* name;
+    List *waitingQueue;       // waitingQueue pointer
     // plus some other stuff you'll need to define
 };
 #endif // SYNCH_H
