@@ -63,8 +63,10 @@ Machine::Machine(bool debug)
       	mainMemory[i] = 0;
 #ifdef USE_TLB
     tlb = new TranslationEntry[TLBSize];
-    for (i = 0; i < TLBSize; i++)
-	tlb[i].valid = FALSE;
+    for (i = 0; i < TLBSize; i++){
+        tlb[i].valid = false;
+        tlb[i].LRU = -1;
+    };
     pageTable = NULL;
 #else	// use linear page table
     tlb = NULL;
@@ -84,6 +86,7 @@ Machine::~Machine()
 {
     delete [] mainMemory;
     if (tlb != NULL)
+        printf("TLB Hit Rate: %d / %d =  %lf",tlbHits,tlbTimes,float(tlbHits)/float(tlbTimes));
         delete [] tlb;
 }
 
@@ -109,6 +112,56 @@ Machine::RaiseException(ExceptionType which, int badVAddr)
     ExceptionHandler(which);		// interrupts are enabled at this point
     interrupt->setStatus(UserMode);
 }
+
+
+
+void 
+Machine::tlbReplace(int address) {
+    // printf("Entering TLB Replacement\n");
+	unsigned int vpn = (unsigned)address / PageSize;
+    int position = -1;
+    for (int i = 0; i < TLBSize ; ++i ) {
+        if (tlb[i].valid == false){
+            position = i;
+            break;
+        }
+    }
+    /*
+    if (position == -1){ // FIFO
+        for (int i = 0 ; i < TLBSize-1 ; ++i){
+            tlb[i] = tlb[i+1];
+        }
+        position = TLBSize-1;
+    }
+    */
+    /*
+    if (position == -1){  // random replacement
+        position = Random()%TLBSize;
+    }
+    */
+
+    if (position == -1){  // Least Recently Used 
+        int minTag = TLBSize;
+        for (int i = 0 ; i < TLBSize; i++){
+            if (tlb[i].LRU < minTag){
+                minTag = tlb[i].LRU;
+                position = i;
+            }
+        }
+        for( int j = 0 ; j < TLBSize ; j++){
+            if ( j == position) continue;
+            tlb[j].LRU--;
+        }
+        tlb[position].LRU = TLBSize-1;
+    }
+    tlb[position].virtualPage = vpn;
+    tlb[position].physicalPage = pageTable[vpn].physicalPage;
+    tlb[position].valid= true;
+    tlb[position].use = false;
+    tlb[position].dirty = false;
+    
+}
+
 
 //----------------------------------------------------------------------
 // Machine::Debugger

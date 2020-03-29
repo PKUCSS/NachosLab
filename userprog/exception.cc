@@ -56,7 +56,18 @@ ExceptionHandler(ExceptionType which)
     if ((which == SyscallException) && (type == SC_Halt)) {
 	DEBUG('a', "Shutdown, initiated by user program.\n");
    	interrupt->Halt();
-    } else {
+    } 
+    else if (which == PageFaultException){
+        //printf("PageFaultException\n");
+        if (machine->tlb != NULL){ // TLB Miss
+            // printf("TLB Miss\n");
+			int address = machine->ReadRegister(BadVAddrReg);
+			machine->tlbReplace(address);
+        }
+        else{  // Page Table Miss,which is ignored now
+        }
+    }
+    else {
 	printf("Unexpected user mode exception %d %d\n", which, type);
 	ASSERT(FALSE);
     }

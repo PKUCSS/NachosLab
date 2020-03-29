@@ -200,8 +200,8 @@ Machine::Translate(int virtAddr, int* physAddr, int size, bool writing)
     }
     
     // we must have either a TLB or a page table, but not both!
-    ASSERT(tlb == NULL || pageTable == NULL);	
-    ASSERT(tlb != NULL || pageTable != NULL);	
+    // ASSERT(tlb == NULL || pageTable == NULL);	
+    // ASSERT(tlb != NULL || pageTable != NULL);	
 
 // calculate the virtual page number, and offset within the page,
 // from the virtual address
@@ -220,11 +220,19 @@ Machine::Translate(int virtAddr, int* physAddr, int size, bool writing)
 	}
 	entry = &pageTable[vpn];
     } else {
+		tlbTimes++;
         for (entry = NULL, i = 0; i < TLBSize; i++)
     	    if (tlb[i].valid && (tlb[i].virtualPage == vpn)) {
-		entry = &tlb[i];			// FOUND!
-		break;
-	    }
+				entry = &tlb[i];			// FOUND!
+				tlbHits++;
+				for (int j = 0 ; j < TLBSize ; ++j){
+					if ( j == i || tlb[j].LRU == -1) continue;
+					if ( tlb[j].LRU >= tlb[i].LRU ) tlb[j].LRU --;
+				}
+				tlb[i].LRU = TLBSize-1;
+
+				break;
+	    	}
 	if (entry == NULL) {				// not found
     	    DEBUG('a', "*** no valid TLB entry found for this virtual page!\n");
     	    return PageFaultException;		// really, this is a TLB fault,

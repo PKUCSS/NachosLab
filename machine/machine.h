@@ -115,6 +115,8 @@ class Machine {
 
     int ReadRegister(int num);	// read the contents of a CPU register
 
+	void tlbReplace(int address); // TLB Replacement when TLB miss happens
+
     void WriteRegister(int num, int value);
 				// store a value into a CPU register
 
@@ -178,7 +180,7 @@ class Machine {
 
     TranslationEntry *tlb;		// this pointer should be considered 
 					// "read-only" to Nachos kernel code
-
+	int tlbTimes,tlbHits;
     TranslationEntry *pageTable;
     unsigned int pageTableSize;
 
