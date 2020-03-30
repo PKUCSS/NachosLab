@@ -57,6 +57,11 @@ ExceptionHandler(ExceptionType which)
 	DEBUG('a', "Shutdown, initiated by user program.\n");
    	interrupt->Halt();
     } 
+    else if ((which == SyscallException) && (type == SC_Exit)){
+        machine->ClearMemory();
+        int nextPC = machine->ReadRegister(NextPCReg);
+        machine->WriteRegister(PCReg,nextPC);
+    }
     else if (which == PageFaultException){
         //printf("PageFaultException\n");
         if (machine->tlb != NULL){ // TLB Miss

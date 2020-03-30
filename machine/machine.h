@@ -157,9 +157,27 @@ class Machine {
 
     char *mainMemory;		// physical memory to store user program,
 				// code and data, while executing
+	
     int registers[NumTotalRegs]; // CPU registers, for executing user programs
-
-
+	bool memoryBitmap[NumPhysPages] ; // The bitmap for global physical memory
+	unsigned int findMemory(){ 
+		for(int i = 0 ; i < NumPhysPages ; i++){
+			if (memoryBitmap[i] == false) {
+				printf("Allocate physical page %d\n",i);
+				memoryBitmap[i] = true ;
+				return i;
+			}
+		}
+		return -1;
+	}
+	void ClearMemory(){
+		for (int i = 0 ; i< pageTableSize ; i++){
+			if (pageTable[i].valid && memoryBitmap[pageTable[i].physicalPage]){
+				memoryBitmap[pageTable[i].physicalPage] = false ;
+				printf("Deallocate physical page %d\n",pageTable[i].physicalPage);
+			}
+		}
+	}
 // NOTE: the hardware translation of virtual addresses in the user program
 // to physical addresses (relative to the beginning of "mainMemory")
 // can be controlled by one of:
@@ -181,6 +199,7 @@ class Machine {
     TranslationEntry *tlb;		// this pointer should be considered 
 					// "read-only" to Nachos kernel code
 	int tlbTimes,tlbHits;
+	int tlbsize ;
     TranslationEntry *pageTable;
     unsigned int pageTableSize;
 
