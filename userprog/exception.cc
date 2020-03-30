@@ -55,6 +55,7 @@ ExceptionHandler(ExceptionType which)
 
     if ((which == SyscallException) && (type == SC_Halt)) {
 	DEBUG('a', "Shutdown, initiated by user program.\n");
+    machine->ClearMemory();
    	interrupt->Halt();
     } 
     else if ((which == SyscallException) && (type == SC_Exit)){
