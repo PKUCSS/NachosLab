@@ -31,33 +31,33 @@ StartProcess(char *filename)
     OpenFile *executable = fileSystem->Open(filename);
     AddrSpace *space;
 
-    OpenFile *executable2 = fileSystem->Open(filename);
-    AddrSpace *space2;
+    // OpenFile *executable2 = fileSystem->Open(filename);
+    // AddrSpace *space2;
 
     if (executable == NULL) {
 	printf("Unable to open file %s\n", filename);
 	return;
     }
-    printf("main user program addrspace initialized\n");
+   // printf("main user program addrspace initialized\n");
     space = new AddrSpace(executable);    
     currentThread->space = space;
-    printf("fork user program addrspace initialized\n");
-    Thread *new_thread = new Thread("Fork thread",1);
-    space2 = new AddrSpace(executable2);
-    new_thread->space = space2;
+   // printf("fork user program addrspace initialized\n");
+   // Thread *new_thread = new Thread("Fork thread",1);
+   // space2 = new AddrSpace(executable2);
+   // new_thread->space = space2;
 
    
-    space2->InitRegisters();	//
-    space2->RestoreState(); 
-    new_thread->Fork(MultiThreadTest,0);
-    currentThread->Yield();
+   // space2->InitRegisters();	//
+    //space2->RestoreState(); 
+   // new_thread->Fork(MultiThreadTest,0);
+    //currentThread->Yield();
 
     space->InitRegisters();		// set the initial register values
     space->RestoreState();		// load page table register
 
 
     
-    printf("Running the main program thread...\n");
+  //  printf("Running the main program thread...\n");
 
     machine->Run();			// jump to the user progam
     ASSERT(FALSE);			// machine->Run never returns;

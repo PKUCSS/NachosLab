@@ -71,6 +71,21 @@ enum ExceptionType { NoException,           // Everything ok!
 
 #define NumTotalRegs 	40
 
+// Definition for Global ReverseTranslationEntry 
+class ReverseTranslationEntry{
+  public:
+    int virtualPage;         // The page number in virtual page 
+    int physicalPage;        // The physical page number
+    bool valid;         
+    bool readOnly; 
+    bool use;
+    bool dirty;        
+    int LRU;
+    int tid;
+};
+
+
+
 // The following class defines an instruction, represented in both
 // 	undecoded binary form
 //      decoded to identify
@@ -117,6 +132,8 @@ class Machine {
 
 	void tlbReplace(int address); // TLB Replacement when TLB miss happens
 
+	void ReverseTableReplace(int address); // Reverse Page Table Replacement when page fault happens
+
     void WriteRegister(int num, int value);
 				// store a value into a CPU register
 
@@ -158,7 +175,9 @@ class Machine {
     char *mainMemory;		// physical memory to store user program,
 				// code and data, while executing
 	
-    int registers[NumTotalRegs]; // CPU registers, for executing user programs
+	ReverseTranslationEntry rt_page_table[NumPhysPages] ; // reverse-mapping page table
+    
+	int registers[NumTotalRegs]; // CPU registers, for executing user programs
 	bool memoryBitmap[NumPhysPages] ; // The bitmap for global physical memory
 	unsigned int findMemory(){ 
 		for(int i = 0 ; i < NumPhysPages ; i++){
@@ -171,10 +190,10 @@ class Machine {
 		return -1;
 	}
 	void ClearMemory(){
-		for (int i = 0 ; i< pageTableSize ; i++){
-			if (pageTable[i].valid && memoryBitmap[pageTable[i].physicalPage]){
-				memoryBitmap[pageTable[i].physicalPage] = false ;
-				printf("Deallocate physical page %d\n",pageTable[i].physicalPage);
+		for (int i = 0 ; i< NumPhysPages ; i++){
+			if (rt_page_table[i].valid && memoryBitmap[rt_page_table[i].physicalPage]){
+				memoryBitmap[rt_page_table[i].physicalPage] = false ;
+				printf("Deallocate physical page %d\n",rt_page_table[i].physicalPage);
 			}
 		}
 	}

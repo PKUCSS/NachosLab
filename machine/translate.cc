@@ -207,7 +207,7 @@ Machine::Translate(int virtAddr, int* physAddr, int size, bool writing)
 // from the virtual address
     vpn = (unsigned) virtAddr / PageSize;
     offset = (unsigned) virtAddr % PageSize;
-    
+    /*
     if (tlb == NULL) {		// => page table => vpn is index into table
 	if (vpn >= pageTableSize) {
 	    DEBUG('a', "virtual page # %d too large for page table size %d!\n", 
@@ -219,8 +219,13 @@ Machine::Translate(int virtAddr, int* physAddr, int size, bool writing)
 	    return PageFaultException;
 	}
 	entry = &pageTable[vpn];
-    } else {
+    } 
+	*/
+
+	//else {
+		
 		tlbTimes++;
+		/*
         for (entry = NULL, i = 0; i < TLBSize; i++)
     	    if (tlb[i].valid && (tlb[i].virtualPage == vpn)) {
 				entry = &tlb[i];			// FOUND!
@@ -233,13 +238,29 @@ Machine::Translate(int virtAddr, int* physAddr, int size, bool writing)
 
 				break;
 	    	}
-	if (entry == NULL) {				// not found
-    	    DEBUG('a', "*** no valid TLB entry found for this virtual page!\n");
-    	    return PageFaultException;		// really, this is a TLB fault,
-						// the page may be in memory,
-						// but not in the TLB
-	}
-    }
+		*/
+		ReverseTranslationEntry *rev_entry;
+		int current_tid = currentThread->GetThreadID();
+		for (rev_entry = NULL,i = 0 ; i < NumPhysPages ; i++) {
+			if ( rt_page_table[i].valid && (rt_page_table[i].virtualPage == vpn)&& (rt_page_table[i].tid == current_tid )) {
+				rev_entry = &rt_page_table[i];
+				break;
+			}
+		}
+		if ( rev_entry == NULL ){
+			DEBUG('a',"*** no valid page table entry for this virtual page\n");
+			return PageFaultException;
+		}
+
+		entry = (TranslationEntry*) rev_entry;
+
+		if (entry == NULL) {				// not found
+				DEBUG('a', "*** no valid TLB entry found for this virtual page!\n");
+				return PageFaultException;		// really, this is a TLB fault,
+							// the page may be in memory,
+							// but not in the TLB
+		}
+    //}
 
     if (entry->readOnly && writing) {	// trying to write to a read-only page
 	DEBUG('a', "%d mapped read-only at %d in TLB!\n", virtAddr, i);
@@ -251,6 +272,7 @@ Machine::Translate(int virtAddr, int* physAddr, int size, bool writing)
     // An invalid translation was loaded into the page table or TLB. 
     if (pageFrame >= NumPhysPages) { 
 	DEBUG('a', "*** frame %d > %d!\n", pageFrame, NumPhysPages);
+	printf("BusError\n");
 	return BusErrorException;
     }
     entry->use = TRUE;		// set the use, dirty bits

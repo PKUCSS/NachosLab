@@ -78,26 +78,30 @@ AddrSpace::AddrSpace(OpenFile *executable)
     numPages = divRoundUp(size, PageSize);
     size = numPages * PageSize;
 
-    ASSERT(numPages <= NumPhysPages);		// check we're not trying
+    disk = new char[size];
+    // ASSERT(numPages <= NumPhysPages);		// check we're not trying
 						// to run anything too big --
 						// at least until we have
 						// virtual memory
 
     DEBUG('a', "Initializing address space, num pages %d, size %d\n", 
 					numPages, size);
+
+    /* commeneted page-table related code after adding reverse mapping page table
 // first, set up the translation 
     pageTable = new TranslationEntry[numPages]; 
 
     for (i = 0; i < numPages; i++) {
 	pageTable[i].virtualPage = i;	// for now, virtual page # = phys page #
-	pageTable[i].physicalPage = machine->findMemory();
-	pageTable[i].valid = TRUE;
+	pageTable[i].physicalPage =  -1 ; // machine->findMemory();
+	pageTable[i].valid = FALSE; //TRUE;
 	pageTable[i].use = FALSE;
 	pageTable[i].dirty = FALSE;
 	pageTable[i].readOnly = FALSE;  // if the code segment was entirely on 
 					// a separate page, we could set its 
 					// pages to be read-only
     }
+    */
 
     /* original code before adding multi thread support
 // zero out the entire address space, to zero the unitialized data segment 
@@ -128,8 +132,9 @@ AddrSpace::AddrSpace(OpenFile *executable)
         for (int i = 0; i < noffH.code.size ;++i){
             int vpn = (noffH.code.virtualAddr+i)/PageSize;
             int offset = (noffH.code.virtualAddr+i)%PageSize;
-            int physicalAddress = pageTable[vpn].physicalPage*PageSize + offset;
-            executable->ReadAt(&(machine->mainMemory[physicalAddress]),1,code_pos++); 
+            int physicalAddress = vpn*PageSize + offset;
+          //  executable->ReadAt(&(machine->mainMemory[physicalAddress]),1,code_pos++); 
+            executable->ReadAt(&(disk[physicalAddress]),1,code_pos++); 
         }
     }
     
@@ -140,11 +145,12 @@ AddrSpace::AddrSpace(OpenFile *executable)
             for (int i = 0; i < noffH.initData.size ;++i){
                 int vpn = (noffH.initData.virtualAddr+i)/PageSize;
                 int offset = (noffH.initData.virtualAddr+i)%PageSize;
-                int physicalAddress = pageTable[vpn].physicalPage*PageSize + offset;
-                executable->ReadAt(&(machine->mainMemory[physicalAddress]),1,data_pos++); 
+                int physicalAddress = vpn*PageSize + offset;
+                // executable->ReadAt(&(machine->mainMemory[physicalAddress]),1,data_pos++); 
+                executable->ReadAt(&(disk[physicalAddress]),1,data_pos++);
         }
     }
-
+    printf("Addresapce Created!\n");
 }
 
 //----------------------------------------------------------------------
@@ -154,7 +160,9 @@ AddrSpace::AddrSpace(OpenFile *executable)
 
 AddrSpace::~AddrSpace()
 {
-   delete pageTable;
+   if(pageTable != NULL) delete pageTable;
+   if(disk != NULL) delete [] disk;
+   
 }
 
 //----------------------------------------------------------------------
@@ -200,7 +208,7 @@ AddrSpace::InitRegisters()
 void AddrSpace::SaveState() 
 {
     for (int i = 0 ; i < machine->tlbsize ; ++i){
-        machine->tlb[i].valid = false;
+      //  machine->tlb[i].valid = false;
     }
 }
 

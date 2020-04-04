@@ -64,6 +64,15 @@ Machine::Machine(bool debug)
     for (i = 0; i < NumPhysPages; i++){
         memoryBitmap[i] = false;
     }
+    for (i = 0 ; i < NumPhysPages; i++){
+        rt_page_table[i].physicalPage = i;
+        rt_page_table[i].virtualPage = -1;
+        rt_page_table[i].valid = false;
+        rt_page_table[i].tid = -1;
+        rt_page_table[i].readOnly = false;
+        rt_page_table[i].use = false;
+        rt_page_table[i].LRU = -1;
+    }
 #ifdef USE_TLB
     tlb = new TranslationEntry[TLBSize];
     for (i = 0; i < TLBSize; i++){
@@ -89,9 +98,12 @@ Machine::Machine(bool debug)
 Machine::~Machine()
 {
     delete [] mainMemory;
-    if (tlb != NULL)
+    if (tlb != NULL){
         printf("TLB Hit Rate: %d / %d =  %lf",tlbHits,tlbTimes,float(tlbHits)/float(tlbTimes));
         delete [] tlb;
+    }
+ 
+    
 }
 
 //----------------------------------------------------------------------
@@ -164,6 +176,60 @@ Machine::tlbReplace(int address) {
     tlb[position].use = false;
     tlb[position].dirty = false;
     
+}
+
+
+void 
+Machine::ReverseTableReplace(int address) {
+    unsigned int vpn = (unsigned)address / PageSize;
+    int position = -1;
+    for (int i = 0; i < TLBSize ; ++i ) {
+        if (rt_page_table[i].valid == false){
+            position = i;
+            break;
+        }
+    }
+    /*
+    if (position == -1){  // Least Recently Used 
+        int minTag = NumPhysPages;
+        for (int i = 0 ; i < NumPhysPages ; i++){
+            if (rt_page_table[i].LRU < NumPhysPages){
+                minTag = rt_page_table[i].LRU;
+                position = i;
+            }
+        }
+        for( int j = 0 ; j < NumPhysPages ; j++){
+            if ( j == position) continue;
+            rt_page_table[j].LRU--;
+        }
+        rt_page_table[position].LRU = NumPhysPages-1;
+    }*/
+    if (position == -1){  // random replacement
+        position = Random()%NumPhysPages;
+    }
+
+    // If dirty,write back to disk
+    if (rt_page_table[position].valid == true && rt_page_table[position].dirty == true){
+        int vpn = rt_page_table[position].virtualPage;
+        int ppn = rt_page_table[position].physicalPage;
+        int tid = rt_page_table[position].tid;
+        for ( int j = 0 ; j < PageSize ; ++j){
+            thread_poiners[tid]->space->disk[vpn*PageSize+j] = mainMemory[ppn*PageSize+j];
+        }
+    }
+
+    // read from disk 
+    int ppn = rt_page_table[position].physicalPage;
+    
+    for ( int j = 0 ; j < PageSize; j++){
+        mainMemory[ppn*PageSize+j] = thread_poiners[currentThread->GetThreadID()]->space->disk[vpn*PageSize+j];
+    }
+    rt_page_table[position].virtualPage = vpn;
+    rt_page_table[position].valid = true;
+    rt_page_table[position].dirty = false;
+    rt_page_table[position].tid = currentThread->GetThreadID();
+    printf("In thread %d,get physical page %d from virtual disk page %d\n",currentThread->GetThreadID(),ppn,vpn);
+
 }
 
 

@@ -31,11 +31,13 @@ class AddrSpace {
     void SaveState();			// Save/restore address space-specific
     void RestoreState();		// info on a context switch 
     unsigned int GetNumPages(){return numPages;}; // GetNumPages
+    char *disk; // Virtual Disk 
   private:
     TranslationEntry *pageTable;	// Assume linear page table translation
 					// for now!
     unsigned int numPages;		// Number of pages in the virtual 
 					// address space
+    
 };
 
 #endif // ADDRSPACE_H

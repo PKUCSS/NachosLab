@@ -55,13 +55,20 @@ ExceptionHandler(ExceptionType which)
 
     if ((which == SyscallException) && (type == SC_Halt)) {
 	DEBUG('a', "Shutdown, initiated by user program.\n");
-    machine->ClearMemory();
+    printf("SC_Halt called\n");
+    //machine->ClearMemory();
    	interrupt->Halt();
     } 
     else if ((which == SyscallException) && (type == SC_Exit)){
-        machine->ClearMemory();
+       // machine->ClearMemory();
+        printf("SC_EXIT called\n");
         int nextPC = machine->ReadRegister(NextPCReg);
         machine->WriteRegister(PCReg,nextPC);
+    }
+    else if ((which == SyscallException) && (type == SC_Create)){
+        printf("SC_CREATE called\n");
+        ASSERT(false);
+
     }
     else if (which == PageFaultException){
         //printf("PageFaultException\n");
@@ -70,11 +77,13 @@ ExceptionHandler(ExceptionType which)
 			int address = machine->ReadRegister(BadVAddrReg);
 			machine->tlbReplace(address);
         }
-        else{  // Page Table Miss,which is ignored now
+        else{  // Reverse Page Table Miss
+            int address = machine->ReadRegister(BadVAddrReg);
+            machine->ReverseTableReplace(address);
         }
     }
     else {
-	printf("Unexpected user mode exception %d %d\n", which, type);
-	ASSERT(FALSE);
+        printf("Unexpected user mode exception %d %d\n", which, type);
+        ASSERT(FALSE);
     }
 }
