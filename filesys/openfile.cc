@@ -30,6 +30,8 @@
 
 OpenFile::OpenFile(int sector)
 { 
+    printf("Num Direct %d\n",NumDirect);
+    printf("Sizeof FHR:%d\n",sizeof(FileHeader));
     hdr = new FileHeader;
     hdr->FetchFrom(sector);
     seekPosition = 0;
@@ -81,7 +83,7 @@ OpenFile::Read(char *into, int numBytes)
    time_t currentTime = time(NULL);
    hdr->lastAccessTime = currentTime;
    hdr->WriteBack(hdrSector);
-   printf("read at time: %s\n",asctime(localtime(&currentTime)));
+  // printf("read at time: %s\n",asctime(localtime(&currentTime)));
    return result;
 }
 
@@ -94,7 +96,7 @@ OpenFile::Write(char *into, int numBytes)
    hdr->lastAccessTime = currentTime;
    hdr->lastWriteTime = currentTime;
    hdr->WriteBack(hdrSector);
-   printf("write at time: %s\n",asctime(localtime(&currentTime)));
+  // printf("write at time: %s\n",asctime(localtime(&currentTime)));
    return result;
 }
 
