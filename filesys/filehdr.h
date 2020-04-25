@@ -16,7 +16,7 @@
 
 #include "disk.h"
 #include "bitmap.h"
-
+#include <time.h>
 #define NumDirect 	((SectorSize - 2 * sizeof(int)) / sizeof(int))
 #define MaxFileSize 	(NumDirect * SectorSize)
 
@@ -55,7 +55,9 @@ class FileHeader {
 					// in bytes
 
     void Print();			// Print the contents of the file.
-
+    time_t createTime;	// Create time of the file
+    time_t lastAccessTime;	// Last access time of the file
+    time_t lastWriteTime;	// Last write time of the file
   private:
     int numBytes;			// Number of bytes in the file
     int numSectors;			// Number of data sectors in the file

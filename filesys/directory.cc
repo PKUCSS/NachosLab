@@ -24,6 +24,7 @@
 #include "utility.h"
 #include "filehdr.h"
 #include "directory.h"
+#include <time.h>
 
 //----------------------------------------------------------------------
 // Directory::Directory
@@ -91,7 +92,7 @@ int
 Directory::FindIndex(char *name)
 {
     for (int i = 0; i < tableSize; i++)
-        if (table[i].inUse && !strncmp(table[i].name, name, FileNameMaxLen))
+        if (table[i].inUse && !strcmp(table[i].name, name))
 	    return i;
     return -1;		// name not in directory
 }
@@ -135,7 +136,9 @@ Directory::Add(char *name, int newSector)
     for (int i = 0; i < tableSize; i++)
         if (!table[i].inUse) {
             table[i].inUse = TRUE;
-            strncpy(table[i].name, name, FileNameMaxLen); 
+            table[i].type = 'F';
+            // strncpy(table[i].name, name, FileNameMaxLen); 
+            table[i].name = name;
             table[i].sector = newSector;
         return TRUE;
 	}
@@ -189,6 +192,8 @@ Directory::Print()
     for (int i = 0; i < tableSize; i++)
 	if (table[i].inUse) {
 	    printf("Name: %s, Sector: %d\n", table[i].name, table[i].sector);
+       // printf("CreateTime: %s\n",asctime( localtime(&table[i].CreateTime)));
+       // printf("LastAccessTime: %s\n",asctime( localtime(&table[i].LastAccessTime)));
 	    hdr->FetchFrom(table[i].sector);
 	    hdr->Print();
 	}

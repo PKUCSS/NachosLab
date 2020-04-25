@@ -88,6 +88,7 @@ main(int argc, char **argv)
     (void) Initialize(argc, argv);
    // PrintHello();//增加对函数的调用
 #ifdef THREADS
+	printf("Complied into thread tests");
     for (argc--, argv++; argc > 0; argc -= argCount, argv += argCount) {
       argCount = 1;
       switch (argv[0][1]) {

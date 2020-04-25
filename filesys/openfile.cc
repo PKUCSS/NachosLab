@@ -15,6 +15,7 @@
 #include "filehdr.h"
 #include "openfile.h"
 #include "system.h"
+#include <time.h>
 #ifdef HOST_SPARC
 #include <strings.h>
 #endif
@@ -32,6 +33,7 @@ OpenFile::OpenFile(int sector)
     hdr = new FileHeader;
     hdr->FetchFrom(sector);
     seekPosition = 0;
+    this->hdrSector = sector;
 }
 
 //----------------------------------------------------------------------
@@ -76,6 +78,10 @@ OpenFile::Read(char *into, int numBytes)
 {
    int result = ReadAt(into, numBytes, seekPosition);
    seekPosition += result;
+   time_t currentTime = time(NULL);
+   hdr->lastAccessTime = currentTime;
+   hdr->WriteBack(hdrSector);
+   printf("read at time: %s\n",asctime(localtime(&currentTime)));
    return result;
 }
 
@@ -84,6 +90,11 @@ OpenFile::Write(char *into, int numBytes)
 {
    int result = WriteAt(into, numBytes, seekPosition);
    seekPosition += result;
+    time_t currentTime = time(NULL);
+   hdr->lastAccessTime = currentTime;
+   hdr->lastWriteTime = currentTime;
+   hdr->WriteBack(hdrSector);
+   printf("write at time: %s\n",asctime(localtime(&currentTime)));
    return result;
 }
 
@@ -150,7 +161,8 @@ OpenFile::WriteAt(char *from, int numBytes, int position)
     int i, firstSector, lastSector, numSectors;
     bool firstAligned, lastAligned;
     char *buf;
-
+ //   printf("Write NumByyes: %d\n",numBytes);
+   // printf("position: %d,fileLength: %d\n",position, fileLength);
     if ((numBytes <= 0) || (position >= fileLength))
 	return 0;				// check request
     if ((position + numBytes) > fileLength)

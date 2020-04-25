@@ -181,7 +181,7 @@ FileSystem::Create(char *name, int initialSize)
     bool success;
 
     DEBUG('f', "Creating file %s, size %d\n", name, initialSize);
-
+    printf("Creating file %s, size %d\n", name, initialSize);
     directory = new Directory(NumDirEntries);
     directory->FetchFrom(directoryFile);
 
@@ -202,9 +202,9 @@ FileSystem::Create(char *name, int initialSize)
 	    else {	
 	    	success = TRUE;
 		// everthing worked, flush all changes back to disk
-    	    	hdr->WriteBack(sector); 		
-    	    	directory->WriteBack(directoryFile);
-    	    	freeMap->WriteBack(freeMapFile);
+    	    hdr->WriteBack(sector); 		
+    	    directory->WriteBack(directoryFile);
+    	    freeMap->WriteBack(freeMapFile);
 	    }
             delete hdr;
 	}

@@ -26,7 +26,7 @@
 
 #include "system.h"
 #include "filehdr.h"
-
+#include <time.h>
 //----------------------------------------------------------------------
 // FileHeader::Allocate
 // 	Initialize a fresh file header for a newly created file.
@@ -48,6 +48,10 @@ FileHeader::Allocate(BitMap *freeMap, int fileSize)
 
     for (int i = 0; i < numSectors; i++)
 	dataSectors[i] = freeMap->Find();
+    time_t currentTime = time(NULL);
+    createTime = currentTime;
+    lastWriteTime = createTime;
+    lastWriteTime = currentTime;
     return TRUE;
 }
 
@@ -129,12 +133,14 @@ FileHeader::FileLength()
 void
 FileHeader::Print()
 {
+
     int i, j, k;
     char *data = new char[SectorSize];
 
     printf("FileHeader contents.  File size: %d.  File blocks:\n", numBytes);
     for (i = 0; i < numSectors; i++)
 	printf("%d ", dataSectors[i]);
+    printf("\nCreate Time:%sLast Access Time:%sLast Write Time:%s\n",asctime(localtime(&createTime)),asctime(localtime(&lastAccessTime)),asctime(localtime(&lastWriteTime)));
     printf("\nFile contents:\n");
     for (i = k = 0; i < numSectors; i++) {
 	synchDisk->ReadSector(dataSectors[i], data);

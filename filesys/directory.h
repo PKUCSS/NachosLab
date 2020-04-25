@@ -13,7 +13,7 @@
 // of liability and disclaimer of warranty provisions.
 
 #include "copyright.h"
-
+#include <time.h>
 #ifndef DIRECTORY_H
 #define DIRECTORY_H
 
@@ -33,8 +33,11 @@ class DirectoryEntry {
   public:
     bool inUse;				// Is this directory entry in use?
     int sector;				// Location on disk to find the 
-					//   FileHeader for this file 
-    char name[FileNameMaxLen + 1];	// Text name for file, with +1 for 
+					//   FileHeader for this file
+    char type;	// Directory entry type:'F' for file,'D' for directory
+
+    char *name;
+    // char name[FileNameMaxLen + 1];	// Text name for file, with +1 for 
 					// the trailing '\0'
 };
 
