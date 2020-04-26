@@ -112,8 +112,8 @@ FileSystem::FileSystem(bool format)
     // The file system operations assume these two files are left open
     // while Nachos is running.
 
-        freeMapFile = new OpenFile(FreeMapSector);
-        directoryFile = new OpenFile(DirectorySector);
+    freeMapFile = new OpenFile(FreeMapSector);
+    directoryFile = new OpenFile(DirectorySector);
      
     // Once we have the files "open", we can write the initial version
     // of each file back to disk.  The directory at this point is completely

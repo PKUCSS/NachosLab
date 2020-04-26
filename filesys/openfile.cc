@@ -30,8 +30,8 @@
 
 OpenFile::OpenFile(int sector)
 { 
-    //printf("Num Direct %d\n",NumDirect);
-   // printf("Sizeof FHR:%d\n",sizeof(FileHeader));
+    printf("Num Direct %d\n",NumDirect);
+    printf("Sizeof FHR:%d\n",sizeof(FileHeader));
     hdr = new FileHeader;
     hdr->FetchFrom(sector);
     seekPosition = 0;
