@@ -189,3 +189,31 @@ PerformanceTest()
    
 }
 
+void getDataFromPipe(int dummy){ 
+    printf("In thread B: reading from pipe to console:\n");
+    char* output_data = new char[11];
+    printf("\033[1;31m");
+    printf("Output:");
+    printf("\033[0m");
+
+    fileSystem->ReadPipe(output_data,10);
+    output_data[10] = '\0';
+    printf("\033[1;33m");
+    printf("%s\n",output_data);
+    printf("\033[0m");
+}
+
+void PipeTest(){ 
+    printf("Starting pipe performance test:\n");
+    printf("In thread A: reading from console to pipe:\n");
+    char* input_data = new char[10];
+    printf("\033[1;31m");
+    printf("Input:");
+    printf("\033[0m");
+    scanf("%s", input_data);
+    fileSystem->WritePipe(input_data,strlen(input_data));
+    Thread* t2 = new Thread("Thread B");
+    t2->Fork(getDataFromPipe,0);
+
+}
+

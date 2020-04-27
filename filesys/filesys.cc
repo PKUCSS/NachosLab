@@ -56,6 +56,7 @@
 // sectors, so that they can be located on boot-up.
 #define FreeMapSector 		0
 #define DirectorySector 	1
+#define PipeSector          2
 
 // Initial file sizes for the bitmap and directory; until the file system
 // supports extensible files, the directory size sets the maximum number 
@@ -63,7 +64,7 @@
 #define FreeMapFileSize 	(NumSectors / BitsInByte)
 #define NumDirEntries 		10
 #define DirectoryFileSize 	(sizeof(DirectoryEntry) * NumDirEntries)
-
+#define PipeFileSize        500 
 //----------------------------------------------------------------------
 // FileSystem::FileSystem
 // 	Initialize the file system.  If format = TRUE, the disk has
@@ -85,20 +86,20 @@ FileSystem::FileSystem(bool format)
         Directory *directory = new Directory(NumDirEntries);
 	FileHeader *mapHdr = new FileHeader;
 	FileHeader *dirHdr = new FileHeader;
-
+    FileHeader *pipeHdr = new FileHeader;
         DEBUG('f', "Formatting the file system.\n");
 
     // First, allocate space for FileHeaders for the directory and bitmap
     // (make sure no one else grabs these!)
 	freeMap->Mark(FreeMapSector);	    
 	freeMap->Mark(DirectorySector);
-
+    freeMap->Mark(PipeSector);
     // Second, allocate space for the data blocks containing the contents
     // of the directory and bitmap files.  There better be enough space!
 
 	ASSERT(mapHdr->Allocate(freeMap, FreeMapFileSize));
 	ASSERT(dirHdr->Allocate(freeMap, DirectoryFileSize));
-
+    ASSERT(pipeHdr->Allocate(freeMap,PipeFileSize));
     // Flush the bitmap and directory FileHeaders back to disk
     // We need to do this before we can "Open" the file, since open
     // reads the file header off of disk (and currently the disk has garbage
@@ -107,14 +108,14 @@ FileSystem::FileSystem(bool format)
         DEBUG('f', "Writing headers back to disk.\n");
 	mapHdr->WriteBack(FreeMapSector);    
 	dirHdr->WriteBack(DirectorySector);
-
+    pipeHdr->WriteBack(PipeSector); 
     // OK to open the bitmap and directory files now
     // The file system operations assume these two files are left open
     // while Nachos is running.
 
     freeMapFile = new OpenFile(FreeMapSector);
     directoryFile = new OpenFile(DirectorySector);
-     
+    pipeFile = new OpenFile(PipeSector);
     // Once we have the files "open", we can write the initial version
     // of each file back to disk.  The directory at this point is completely
     // empty; but the bitmap has been changed to reflect the fact that
@@ -133,12 +134,14 @@ FileSystem::FileSystem(bool format)
 	delete directory; 
 	delete mapHdr; 
 	delete dirHdr;
+    delete pipeHdr;
 	}
     } else {
     // if we are not formatting the disk, just open the files representing
     // the bitmap and directory; these are left open while Nachos is running
         freeMapFile = new OpenFile(FreeMapSector);
         directoryFile = new OpenFile(DirectorySector);
+        pipeFile = new OpenFile(PipeSector);
     }
 }
 
@@ -339,3 +342,21 @@ FileSystem::Print()
     delete freeMap;
     delete directory;
 } 
+
+int FileSystem::ReadPipe(char* data,int numBytes){
+
+    OpenFile * pipeFile = new OpenFile(PipeSector);
+    int size = pipeFile->Read(data,numBytes);
+    delete pipeFile;
+    printf("Get %d bytes of data from pipe\n",size);
+    return size;
+}
+
+int FileSystem::WritePipe(char* data,int numBytes){
+
+    OpenFile * pipeFile = new OpenFile(PipeSector);
+    int size = pipeFile->Write(data,numBytes);
+    delete pipeFile;
+    printf("Get %d bytes of data from pipe\n",size);
+    return size;
+}
