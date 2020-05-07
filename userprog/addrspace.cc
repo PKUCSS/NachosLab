@@ -59,7 +59,9 @@ SwapHeader (NoffHeader *noffH)
 //
 //	"executable" is the file containing the object code to load into memory
 //----------------------------------------------------------------------
-
+AddrSpace::AddrSpace(){
+	pageTable = NULL;
+}
 AddrSpace::AddrSpace(OpenFile *executable)
 {
     NoffHeader noffH;
@@ -164,7 +166,10 @@ AddrSpace::~AddrSpace()
    if(disk != NULL) delete [] disk;
    
 }
-
+void AddrSpace::AddrSpaceCopy(AddrSpace* src){
+    disk = src->disk;
+	numPages = src->numPages;
+}
 //----------------------------------------------------------------------
 // AddrSpace::InitRegisters
 // 	Set the initial values for the user-level register set.

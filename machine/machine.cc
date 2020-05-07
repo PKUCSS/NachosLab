@@ -228,7 +228,7 @@ Machine::ReverseTableReplace(int address) {
     rt_page_table[position].valid = true;
     rt_page_table[position].dirty = false;
     rt_page_table[position].tid = currentThread->GetThreadID();
-    printf("In thread %d,get physical page %d from virtual disk page %d\n",currentThread->GetThreadID(),ppn,vpn);
+   // printf("In thread %d,get physical page %d from virtual disk page %d\n",currentThread->GetThreadID(),ppn,vpn);
 
 }
 

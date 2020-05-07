@@ -25,6 +25,49 @@
 #include "system.h"
 #include "syscall.h"
 #include "addrspace.h"
+
+
+void exec_func(char* fileName){
+        fileName[5] = '\0';
+		printf("Try to open file %s.\n",fileName);
+		OpenFile *executable = fileSystem->Open(fileName);
+		AddrSpace *space;
+		if (executable == NULL) {
+			printf("Unable to open file %s\n", fileName);
+			return;
+		}
+	    space = new AddrSpace(executable);    
+	    currentThread->space = space;
+	    delete executable;			
+
+	    space->InitRegisters();		
+	    space->RestoreState();		
+	    machine->Run();
+}
+
+class Info{
+    public:
+        AddrSpace* space;
+        int pc;
+};
+
+void fork_func(int info_address){
+	Info *info = (Info*)info_address;
+	AddrSpace *space = new AddrSpace;
+    ASSERT(info->space != NULL);
+	space->AddrSpaceCopy(info->space);
+	currentThread->space = space;
+	int currentPc = info->pc;
+	space->InitRegisters();
+	space->RestoreState();
+	machine->WriteRegister(PCReg,currentPc);
+	machine->WriteRegister(NextPCReg,currentPc+4);
+	machine->Run();
+}
+
+
+
+
 //----------------------------------------------------------------------
 // ExceptionHandler
 // 	Entry point into the Nachos kernel.  Called when a user program
@@ -62,9 +105,37 @@ ExceptionHandler(ExceptionType which)
     else if ((which == SyscallException) && (type == SC_Exit)){
        // machine->ClearMemory();
         printf("SC_EXIT called\n");
-        int nextPC = machine->ReadRegister(NextPCReg);
-        machine->WriteRegister(PCReg,nextPC);
+        // int nextPC = machine->ReadRegister(NextPCReg);
+        // machine->WriteRegister(PCReg,nextPC);
+        int status = machine->ReadRegister(4);
+		printf("thread %d exit with status %d.\n",currentThread->GetThreadID(),status);
+		machine->AdvancePC();
+		currentThread->Finish();
     }
+    else if((which == SyscallException) && (type == SC_Join)){
+		printf("SC_Join called\n");
+		int threadId = machine->ReadRegister(4);
+		while(ThreadIDOccupied[threadId] == true)
+			currentThread->Yield();
+		machine->AdvancePC();
+	}
+    else if((which == SyscallException) && (type == SC_Fork)){
+		printf("SC_Fork called\n");
+		int addr = machine->ReadRegister(4);
+		Info *info = new Info;
+		info->space = currentThread->space;
+		info->pc = addr;
+		Thread* newThread = new Thread("new thread");
+		newThread->Fork(fork_func,int(info));
+		machine->AdvancePC();
+		
+	}
+    else if((which == SyscallException) && (type == SC_Yield)){
+		printf("SC_Yield Called for thread %s\n",currentThread->getName());
+		machine->AdvancePC();
+		currentThread->Yield();
+	}
+
     else if ((which == SyscallException) && (type == SC_Create)){
         printf("SC_CREATE called\n");
         int address = machine->ReadRegister(4);
@@ -154,6 +225,14 @@ ExceptionHandler(ExceptionType which)
 		delete openfile;
 		machine->AdvancePC();
 	}
+    else if ((which == SyscallException) && (type == SC_Exec) ) {
+        printf("SC_Exec called\n");
+        int address = machine->ReadRegister(4);
+		Thread *newThread = new Thread("new thread");
+		newThread->Fork((VoidFunctionPtr)exec_func,address);
+		machine->WriteRegister(2,newThread->GetThreadID());
+		machine->AdvancePC();
+    }
     else if (which == PageFaultException){
         //printf("PageFaultException\n");
         if (machine->tlb != NULL){ // TLB Miss

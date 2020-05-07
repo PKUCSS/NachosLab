@@ -13,11 +13,26 @@
 char input[10];
 char output[10];
 int fd;
-char 
-main()
+char f1[10] = "1.txt";
+char f2[10] = "2.txt";
+char f3[10] = "../test/halt";
+
+void func(){
+    
+	Create(f1);
+}
+
+char main()
 {
 
     
+	Create(f2);
+	Fork(func);
+	//fd = Exec(f3);
+	//Join(fd);
+    Exit(0);
+
+    /*
     Read(input,10,0);
     Create("testFile");
     fd = Open("testFile");
@@ -27,6 +42,9 @@ main()
     Read(output,10,fd);
     Close(fd);
     Write(output,10,1);
+    */
+
+    
 
     /*
     int i, j, tmp;

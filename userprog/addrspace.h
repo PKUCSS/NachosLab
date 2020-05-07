@@ -23,11 +23,12 @@ class AddrSpace {
     AddrSpace(OpenFile *executable);	// Create an address space,
 					// initializing it with the program
 					// stored in the file "executable"
+    AddrSpace();
     ~AddrSpace();			// De-allocate an address space
 
     void InitRegisters();		// Initialize user-level CPU registers,
 					// before jumping to user code
-
+    void AddrSpaceCopy(AddrSpace* src);
     void SaveState();			// Save/restore address space-specific
     void RestoreState();		// info on a context switch 
     unsigned int GetNumPages(){return numPages;}; // GetNumPages
