@@ -335,3 +335,9 @@ void Machine::WriteRegister(int num, int value)
 	registers[num] = value;
     }
 
+void
+Machine::AdvancePC(){
+	WriteRegister(PrevPCReg,registers[PCReg]);
+	WriteRegister(PCReg,registers[PCReg]+4);
+	WriteRegister(NextPCReg,registers[NextPCReg]+4);
+}

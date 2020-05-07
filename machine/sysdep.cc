@@ -156,7 +156,7 @@ OpenForWrite(char *name)
 {
     int fd = open(name, O_RDWR|O_CREAT|O_TRUNC, 0666);
 
-    ASSERT(fd >= 0); 
+   // ASSERT(fd >= 0); 
     return fd;
 }
 

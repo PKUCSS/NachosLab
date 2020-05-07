@@ -24,7 +24,7 @@
 #include "copyright.h"
 #include "system.h"
 #include "syscall.h"
-
+#include "addrspace.h"
 //----------------------------------------------------------------------
 // ExceptionHandler
 // 	Entry point into the Nachos kernel.  Called when a user program
@@ -54,10 +54,10 @@ ExceptionHandler(ExceptionType which)
     int type = machine->ReadRegister(2);
 
     if ((which == SyscallException) && (type == SC_Halt)) {
-	DEBUG('a', "Shutdown, initiated by user program.\n");
-    printf("SC_Halt called\n");
-    //machine->ClearMemory();
-   	interrupt->Halt();
+        DEBUG('a', "Shutdown, initiated by user program.\n");
+        printf("SC_Halt called\n");
+        //machine->ClearMemory();
+        interrupt->Halt();
     } 
     else if ((which == SyscallException) && (type == SC_Exit)){
        // machine->ClearMemory();
@@ -67,9 +67,93 @@ ExceptionHandler(ExceptionType which)
     }
     else if ((which == SyscallException) && (type == SC_Create)){
         printf("SC_CREATE called\n");
-        ASSERT(false);
+        int address = machine->ReadRegister(4);
+        int len = 0 ,value = 1;
+        while(value != 0 ){ 
+            machine->ReadMem(address++,1,&value);
+			len++;
+        }
+        address = address-len;
+        char* fileName = new char[len];
+		for(int i = 0; i < len; i++){
+			machine->ReadMem(address+i,1,&value);
+			fileName[i] = (char)value;
+		}
+        printf("Create File: %s\n",fileName);
+        fileSystem->Create(fileName,100);
+        machine->AdvancePC();
 
     }
+    else if ((which == SyscallException) && (type == SC_Open)){
+        printf("SC_Open called\n");
+        int address = machine->ReadRegister(4);
+        int len = 0 ,value = 1;
+        while(value != 0 ){ 
+            machine->ReadMem(address++,1,&value);
+			len++;
+        }
+        char* fileName = new char[len];
+        address = address-len;
+		for(int i = 0; i < len; i++){
+			machine->ReadMem(address+i,1,&value);
+			fileName[i] = (char)value;
+		}
+        printf("Open File: %s\n",fileName);
+		OpenFile *openfile = fileSystem->Open(fileName);
+		machine->WriteRegister(2,int(openfile));
+        machine->AdvancePC();
+		
+    }
+    else if((which == SyscallException) && (type == SC_Write)){
+		printf("SC_Write Called\n");
+		int address = machine->ReadRegister(4);
+		int len = machine->ReadRegister(5);
+		int fd = machine->ReadRegister(6);
+		char* data = new char[len];
+		int value;
+		for(int i = 0; i < len; i++){
+			machine->ReadMem(address+i,1,&value);
+			data[i] = char(value);
+		}
+		if(fd != 1){
+			OpenFile *openfile = (OpenFile*)fd;
+			openfile->Write(data,len);
+		}
+		else{
+			for(int i = 0; i < len; i++)
+				putchar(data[i]);
+		}
+		machine->AdvancePC();
+	}
+    else if((which == SyscallException) && (type == SC_Read)){
+		printf("SC_Read called\n");
+		int address = machine->ReadRegister(4);
+		int len = machine->ReadRegister(5);
+		int fd = machine->ReadRegister(6);
+		char* data = new char[len];
+		int result;
+		if(fd != 0){
+			OpenFile *openfile = (OpenFile*)fd;
+			result = openfile->Read(data,len);
+		}
+		else{
+			for(int i = 0; i < len; i++)
+				data[i] = getchar();
+			    result = len;
+		} 
+		for(int i = 0; i < result; i++){
+			machine->WriteMem(address+i,1,int(data[i]));
+		}
+		machine->WriteRegister(2,result);
+		machine->AdvancePC();
+	}
+    else if((which == SyscallException) && (type == SC_Close)){
+		printf("SC_Close called\n");
+		int fd = machine->ReadRegister(4);
+		OpenFile *openfile = (OpenFile*)fd;
+		delete openfile;
+		machine->AdvancePC();
+	}
     else if (which == PageFaultException){
         //printf("PageFaultException\n");
         if (machine->tlb != NULL){ // TLB Miss

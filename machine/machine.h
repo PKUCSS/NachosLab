@@ -139,7 +139,7 @@ class Machine {
 
 
 // Routines internal to the machine simulation -- DO NOT call these 
-
+	void AdvancePC();
     void OneInstruction(Instruction *instr); 	
     				// Run one instruction of a user program.
     void DelayedLoad(int nextReg, int nextVal);  	
