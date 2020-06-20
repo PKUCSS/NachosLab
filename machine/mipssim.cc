@@ -39,9 +39,9 @@ Machine::Run()
     for (;;) {
 		// printf("one instruction\n");
         OneInstruction(instr);
-	interrupt->OneTick();
-	if (singleStep && (runUntilTime <= stats->totalTicks))
-	  Debugger();
+		interrupt->OneTick();
+		if (singleStep && (runUntilTime <= stats->totalTicks))
+	  		Debugger();
     }
 }
 
